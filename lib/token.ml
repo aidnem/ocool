@@ -1,7 +1,7 @@
 type t =
     (* identifiers *)
     | Ident of string
-    | Integer of string
+    | Integer of int
     (* operators *)
     | Assign
     | Add
@@ -12,9 +12,10 @@ type t =
     | GreaterThan
     | Equal
     | NotEqual
+    | Bang
     (* delimiters *)
     | Comma
-    | SemiColon
+    | Semicolon
     | LeftParen
     | RightParen
     | LeftBracket

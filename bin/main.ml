@@ -1,3 +1,6 @@
+module Lexer = Ocool.Lexer
+module Token = Ocool.Token
+
 let usage_msg = "ocool [-verbose] <source file> -o <output file>"
 
 let verbose = ref false
@@ -17,10 +20,18 @@ let anon_fun filename =
             Arg.usage speclist usage_msg;
             ()
 
+let read_file file =
+    In_channel.with_open_bin file In_channel.input_all
+
+let rec consume_lexer lexer =
+    match Lexer.next_token lexer with
+    | lexer, Some token ->  Token.show token ; consume_lexer lexer
+    | _, None -> ()
+
 let () =
     Arg.parse speclist anon_fun usage_msg;
     match !input_file with
     | "" -> Printf.eprintf "Error: no input file specified.";
             Arg.usage speclist usage_msg;
             ()
-    | _ -> ()
+    | some_file -> print_string @@ Lexer.show @@ Lexer.init @@ read_file some_file
