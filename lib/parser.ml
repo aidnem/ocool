@@ -1,3 +1,5 @@
+let ( let* ) res f = Base.Result.bind res ~f
+
 type t =
     { lexer : Lexer.t
     ; current : Token.t option

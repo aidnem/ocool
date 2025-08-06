@@ -3,6 +3,7 @@
  (modules token lexer ast parser)
  (libraries
    fmt
-   ppx_deriving.runtime)
+   ppx_deriving.runtime
+   base)
  (preprocess
    (pps ppx_deriving.std)))

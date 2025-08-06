@@ -23,7 +23,8 @@
    ocaml
    dune
    fmt
-   ppx_deriving)
+   ppx_deriving
+   base)
  (tags
   ("add topics" "to describe" your project)))
 

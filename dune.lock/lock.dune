@@ -1,6 +1,6 @@
 (lang package 0.1)
 
-(dependency_hash c0847e0051ded39cf9de2a00bc897998)
+(dependency_hash 53e742e9d94ed1681a31e54e38dce269)
 
 (ocaml ocaml-base-compiler)
 
@@ -16,17 +16,16 @@
  (variable_values
   (with-doc false)
   (with-dev-setup false)
-  (sys-ocaml-version 5.2.1)
+  (sys-ocaml-version 5.3.0)
   (post true)
-  (os-distribution manjaro)
-  (os linux)
+  (os-distribution homebrew)
+  (os macos)
   (opam-version 2.2.0~alpha-vendored)
-  (arch x86_64))
+  (arch arm64))
  (unset_variables
   with-test
   sys-ocaml-libc
   sys-ocaml-cc
   sys-ocaml-arch
-  enable-ocaml-beta-repository
   dev
   build))
