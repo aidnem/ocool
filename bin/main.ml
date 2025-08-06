@@ -25,7 +25,10 @@ let read_file file =
 
 let rec consume_lexer lexer =
     match Lexer.next_token lexer with
-    | lexer, Some token ->  Token.show token ; consume_lexer lexer
+    | lexer, Some token ->
+        print_string @@ Token.show token;
+        print_string "\n";
+        consume_lexer lexer
     | _, None -> ()
 
 let () =
@@ -34,4 +37,4 @@ let () =
     | "" -> Printf.eprintf "Error: no input file specified.";
             Arg.usage speclist usage_msg;
             ()
-    | some_file -> print_string @@ Lexer.show @@ Lexer.init @@ read_file some_file
+    | some_file -> consume_lexer @@ Lexer.init @@ read_file some_file

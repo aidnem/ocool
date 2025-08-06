@@ -13,6 +13,7 @@ depends: [
   "ocaml"
   "dune" {>= "3.19"}
   "fmt"
+  "ppx_deriving"
   "odoc" {with-doc}
 ]
 build: [

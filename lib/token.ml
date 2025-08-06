@@ -15,6 +15,7 @@ type t =
     | Bang
     (* delimiters *)
     | Comma
+    | Colon
     | Semicolon
     | LeftParen
     | RightParen
@@ -30,7 +31,7 @@ type t =
     | If
     | Else
     | Return
-[@@deriving show, eq]
+    [@@deriving show, eq]
 
 let lookup_ident str =
     match str with

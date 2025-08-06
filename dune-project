@@ -22,7 +22,8 @@
  (depends
    ocaml
    dune
-   fmt)
+   fmt
+   ppx_deriving)
  (tags
   ("add topics" "to describe" your project)))
 

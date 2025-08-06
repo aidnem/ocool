@@ -18,6 +18,7 @@ let rec next_token lexer =
     | Some ch ->
         let lexer, token =
             match ch with
+            | ':' -> advance lexer, Colon
             | ';' -> advance lexer, Semicolon
             | '(' -> advance lexer, LeftParen
             | ')' -> advance lexer, RightParen
@@ -35,8 +36,8 @@ let rec next_token lexer =
             | ch when is_identifier ch -> read_identifier lexer
             | ch when is_number ch -> read_number lexer
             | ch -> Fmt.failwith "unknown char: %c" ch
-    in
-    lexer, Some token
+        in
+        lexer, Some token
 
 and advance lexer =
     if lexer.position >= String.length lexer.input - 1

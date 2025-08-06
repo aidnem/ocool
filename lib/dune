@@ -1,6 +1,8 @@
 (library
  (name ocool)
  (modules lexer token)
- (libraries fmt)
+ (libraries
+   fmt
+   ppx_deriving.runtime)
  (preprocess
-   (pps ppx_deriving.show)))
+   (pps ppx_deriving.std)))
