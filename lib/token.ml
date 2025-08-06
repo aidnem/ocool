@@ -24,6 +24,7 @@ type t =
     | LeftBrace
     | RightBrace
     (* keywords *)
+    | Import
     | Fn
     | Let
     | True

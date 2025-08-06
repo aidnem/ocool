@@ -106,15 +106,15 @@ and if_peeked lexer ch ~default ~matched =
     in
     advance lexer, result
 
-and show lexer =
-    "Lexer<\""
-    ^ lexer.input
-    ^ "\", "
-    ^ string_of_int lexer.position
-    ^ ", '"
-    ^ match lexer.ch with
-        | Some ch -> String.make 1 ch
-        | None -> "None"
-    ^ "'>"
+(* and show lexer = *)
+(*     "Lexer<\"" *)
+(*     ^ lexer.input *)
+(*     ^ "\", " *)
+(*     ^ string_of_int lexer.position *)
+(*     ^ ", '" *)
+(*     ^ match lexer.ch with *)
+(*         | Some ch -> String.make 1 ch *)
+(*         | None -> "None" *)
+(*     ^ "'>" *)
 ;;
 
