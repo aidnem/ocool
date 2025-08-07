@@ -1,6 +1,7 @@
 type t =
     (* identifiers *)
     | Ident of string
+    | String of string
     | Integer of int
     (* operators *)
     | Assign

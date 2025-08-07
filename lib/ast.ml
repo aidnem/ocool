@@ -12,6 +12,7 @@ and outer_statement =
 
 and func_def = 
     { name : identifier
+    ; args: identifier list
     ; body : block }
 
 and expression =

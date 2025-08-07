@@ -1,3 +1,4 @@
-fn hi(argc: int, argv: *char) {
+fn main(argc, argv) {
+    puts("Hello, world!\n");
     return 0;
 }

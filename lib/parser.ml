@@ -22,7 +22,7 @@ let init lexer =
     let parser = advance parser in
     let parser = advance parser in
     parser
-let rec parse parser =
+let rec parse (parser : t) : (Ast.program, string) result =
     let rec parse' parser outer_statements =
         match parser.current with
         | Some _ ->
@@ -32,8 +32,8 @@ let rec parse parser =
         | None -> Ok (parser, List.rev outer_statements)
     in
     match parse' parser [] with
-    | Error e -> e
-    | Ok (_, stmts) -> Ok (Ast.new_program stmts )
+    | Error e -> Error e
+    | Ok (_, stmts) -> Ok (Ast.new_program stmts)
 and parse_outer_statement (parser : t) : (t * Ast.outer_statement, string) result =
     match parser.current with
     | Some Token.Import -> parse_import parser
@@ -42,10 +42,20 @@ and parse_outer_statement (parser : t) : (t * Ast.outer_statement, string) resul
 and parse_import parser =
     let parser = advance parser in
     let* parser, ident = parse_identifier parser in
-    match ident with
-    | Ast.Identifier ident -> Ok(parser, Ast.Import ident.identifier)
-    | _ -> Error "Can only import identifiers currently"
-and parse_identifier parser =
+    Ok(parser, Ast.Import ident.identifier)
+and parse_function (parser : t) : (t * Ast.outer_statement, string) result =
+    let parser = advance parser in
+    let* parser, name = parse_identifier parser in
+    (* let* parser = expect parser Token.LeftParen in *)
+    (* let* parser, args = parse_arguments parser in *)
+    (* let* parser = expect parser Token.RightParen in *)
+    (* let* parser, body = parse_block parser in *)
+    Ok(parser, Ast.FuncDef { name, [], { block=[] }})
+and parse_identifier (parser: t) : (t * Ast.identifier, string) result =
     match parser.current with
-    | Some Token.Ident identifier -> Ok(advance parser, Ast.Identifier { identifier } )
+    | Some Token.Ident identifier -> Ok(advance parser, { identifier } )
     | _ -> Error "Expected identifier"
+and expect parser tok =
+    match parser.current with
+    | Some(tok) -> advance parser
+    | _ -> Error (Fmt.fmt "Expected %s, found %s" show tok show parser.current)

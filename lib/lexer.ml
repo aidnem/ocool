@@ -33,6 +33,7 @@ let rec next_token lexer =
             | '/' -> advance lexer, Div
             | '!' -> if_peeked lexer '=' ~default:Bang ~matched:NotEqual
             | '=' -> if_peeked lexer '=' ~default:Assign ~matched:Equal
+            | '"' -> read_string lexer
             | ch when is_identifier ch -> read_identifier lexer
             | ch when is_number ch -> read_number lexer
             | ch -> Fmt.failwith "unknown char: %c" ch
@@ -80,6 +81,24 @@ and is_whitespace ch =
     match ch with
     | ' ' | '\t' | '\n' -> true
     | _ -> false
+
+and read_string lexer =
+    let rec read_string' lexer current_string is_escaped =
+        if is_escaped then
+            match lexer.ch with
+            | Some 'n' -> read_string' (advance lexer) (current_string ^ "\n") false
+            | Some 't' -> read_string' (advance lexer) (current_string ^ "\t") false
+            | Some '\\' -> read_string' (advance lexer) (current_string ^ "\\") false
+            | _ -> failwith "expected 'n', '\\', '\"', or 't' after '\\', found EOF"
+        else
+            match lexer.ch with
+            | Some '"' -> lexer, ""
+            | Some '\\' -> read_string' (advance lexer) current_string true
+            | Some ch -> read_string' (advance lexer) (current_string ^ (String.make 1 ch)) false
+            | None -> failwith "unclosed string literal, expected '\"' but found EOF"
+    in
+    let lexer, string_content = read_string' lexer "" false in
+    lexer, Token.String string_content
 
 and read_identifier lexer =
     let lexer, ident = read_while lexer is_identifier in
