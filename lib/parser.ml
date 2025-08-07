@@ -15,7 +15,9 @@ type parse_error =
 let advance parser =
     let current = parser.peek in
     let lexer, peek = Lexer.next_token parser.lexer in
-    { lexer; current; peek }
+    let parser = { lexer; current; peek } in
+    Printf.printf "%s\n" (show parser);
+    parser
 
 let init lexer =
     let parser = { lexer; current = None; peek = None } in
@@ -46,16 +48,50 @@ and parse_import parser =
 and parse_function (parser : t) : (t * Ast.outer_statement, string) result =
     let parser = advance parser in
     let* parser, name = parse_identifier parser in
-    (* let* parser = expect parser Token.LeftParen in *)
-    (* let* parser, args = parse_arguments parser in *)
-    (* let* parser = expect parser Token.RightParen in *)
-    (* let* parser, body = parse_block parser in *)
-    Ok(parser, Ast.FuncDef { name, [], { block=[] }})
+    let* parser = expect parser Token.LeftParen in
+    let* parser, args = parse_arguments parser in
+    let* parser, body = parse_block parser in
+    Ok(parser, Ast.FuncDef { name; args ; body })
 and parse_identifier (parser: t) : (t * Ast.identifier, string) result =
     match parser.current with
     | Some Token.Ident identifier -> Ok(advance parser, { identifier } )
     | _ -> Error "Expected identifier"
 and expect parser tok =
     match parser.current with
-    | Some(tok) -> advance parser
-    | _ -> Error (Fmt.fmt "Expected %s, found %s" show tok show parser.current)
+    | Some(actual_tok) when tok == actual_tok -> Ok(advance parser)
+    | _ -> Error (Printf.sprintf "Expected %s, found %s" (Token.show tok) (match parser.current with
+                                                                          | Some(tok) -> Token.show tok
+                                                                          | None -> "EOF"))
+and parse_arguments parser =
+    let parser = parser in
+    let rec parse_arguments' parser args =
+        Printf.printf "==> parse_arguments' called with %s\n" (show parser);
+        match parser.current with
+        | None -> Error "Expected identifier or ')', found EOF"
+        | Some Token.Ident id -> 
+                let parser = advance parser in
+                (match parser.current with
+                | Some Token.Comma -> parse_arguments' (advance parser) (id :: args)
+                | Some Token.RightParen -> Ok(advance parser, [])
+                | Some tok -> Error (Printf.sprintf "Expected identifier or ')' in function arguments, found %s" (Token.show tok))
+                | None -> Error "Expected identifier or ')' in function arguments, found EOF")
+        | Some tok -> Error (Printf.sprintf "Expected identifier or ')' in function arguments, found %s" (Token.show tok))
+    in
+    let* parser, args = parse_arguments' parser [] in
+    Ok(parser, args)
+
+and parse_block (parser : t) : (t * Ast.block, string) result =
+    let parser = advance parser in
+    let rec parse_block' (parser : t) (stmts : Ast.statement list) : (t * Ast.statement list, string) result =
+        match parser.current with
+        | None -> Error "Expected statement or '}', found EOF"
+        | Some Token.RightBrace -> Ok((advance parser), [])
+        | Some _ ->
+            let* parser, statement = parse_statement parser in
+                parse_block' parser (statement :: stmts)
+    in
+    let* parser, block = parse_block' parser [] in
+    let block : Ast.block = { block } in
+    Ok(parser, block)
+and parse_statement parser =
+    Ok(parser, Ast.Return(Ast.Integer 0))

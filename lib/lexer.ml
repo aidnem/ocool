@@ -92,12 +92,12 @@ and read_string lexer =
             | _ -> failwith "expected 'n', '\\', '\"', or 't' after '\\', found EOF"
         else
             match lexer.ch with
-            | Some '"' -> lexer, ""
+            | Some '"' -> advance lexer, ""
             | Some '\\' -> read_string' (advance lexer) current_string true
             | Some ch -> read_string' (advance lexer) (current_string ^ (String.make 1 ch)) false
             | None -> failwith "unclosed string literal, expected '\"' but found EOF"
     in
-    let lexer, string_content = read_string' lexer "" false in
+    let lexer, string_content = read_string' (advance lexer) "" false in
     lexer, Token.String string_content
 
 and read_identifier lexer =
