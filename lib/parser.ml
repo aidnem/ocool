@@ -16,7 +16,6 @@ let advance parser =
     let current = parser.peek in
     let lexer, peek = Lexer.next_token parser.lexer in
     let parser = { lexer; current; peek } in
-    Printf.printf "%s\n" (show parser);
     parser
 
 let init lexer =
@@ -65,7 +64,6 @@ and expect parser tok =
 and parse_arguments parser =
     let parser = parser in
     let rec parse_arguments' parser args =
-        Printf.printf "==> parse_arguments' called with %s\n" (show parser);
         match parser.current with
         | None -> Error "Expected identifier or ')', found EOF"
         | Some Token.Ident id -> 
