@@ -45,3 +45,6 @@ and statement =
 
 and identifier = { identifier: string }
 and block = { block : statement list }
+
+let new_program outer_statements = 
+    { outer_statements };;

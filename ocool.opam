@@ -14,7 +14,6 @@ depends: [
   "dune" {>= "3.19"}
   "fmt"
   "ppx_deriving"
-  "base"
   "odoc" {with-doc}
 ]
 build: [
