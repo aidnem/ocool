@@ -1,0 +1,4 @@
+fn main(argc, argv) {
+    let return_code = 0
+    return 0
+}
