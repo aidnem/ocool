@@ -1,4 +1,4 @@
 fn main(argc, argv) {
-    let return_code = -0
+    let return_code = -1
     return 0
 }

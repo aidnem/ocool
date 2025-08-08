@@ -132,15 +132,16 @@ and parse_expression parser =
             let* parser, right = parser |> advance |> parse_expression in
             Ok(parser, Ast.Prefix { operator = Token.Sub; right })
     | _ ->
-            let* parser, left = parser |> parse_atom in
+            let* parser, lhs = parser |> parse_atom in
             let parser = parser |> advance in
-            (match parser.current with
-                Some token when is_infix_operator token ->
-                    let operator = token in
+            match parser.current with
+                | Some token when is_infix_operator token ->
+                    (let operator = token in
                     let parser = parser |> advance in
-                    let* parser, right = parse_atom parser in
-                    Ok(parser, Ast.Infix { left; operator; right})
-                _ -> Ok(parser, left))
+                    let* parser, rhs = parse_atom parser in
+                    Ok(parser, Ast.Infix { left=lhs; operator; right=rhs }))
+                | _ -> Ok(parser, lhs)
+
 and parse_atom parser =
     match parser.current with
     | Some Token.Integer value ->
@@ -149,13 +150,27 @@ and parse_atom parser =
             if parser.current == Some Token.LeftParen then
                 parse_function_call parser
             else
-                Ok(advance parser, Ast.Identifier name)
+                Ok(advance parser, Ast.Identifier { identifier = name })
     | Some tok -> Error (Printf.sprintf "Expected a valid atom (-[number], [number], [number + number], function_call()), but found %s" (Token.show tok))
-    | _ -> Error Printf.sprintf "Expected atom or expression, found EOF"
+    | _ -> Error "Expected atom or expression, found EOF"
+
+and parse_call_arguments parser =
+    let parser = parser in
+    let rec parse_call_arguments' parser args =
+        let* parser, arg = parser |> parse_expression in
+        match parser.current with
+        | Some Token.Comma -> parse_call_arguments' (advance parser) (arg :: args)
+        | Some Token.RightParen -> Ok(advance parser, arg :: args |> List.rev)
+        | Some tok -> Error (Printf.sprintf "Expected expression or ')' in function arguments, found %s" (Token.show tok))
+        | None -> Error "Expected expression or ')' in function arguments, found EOF"
+    in
+    let* parser, args = parse_call_arguments' parser [] in
+    Ok(parser, args)
+
 and parse_function_call parser =
-    match parser.current, token.peek with
+    match parser.current, parser.peek with
     | Some Token.Ident name, Some Token.LeftParen ->
         let parser = parser |> advance |> advance in
-        let* parser, args = parse_arguments parser in
-        Ok(parser, Ast.Call { fn = Ast.Identifier name; args })
+        let* parser, args = parse_call_arguments parser in
+        Ok(parser, Ast.Call { fn = Ast.Identifier { identifier = name }; args })
     | _ -> Error "unreachable, parse_function_call must only be called on an identifier followed by a ("
