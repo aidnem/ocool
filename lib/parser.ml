@@ -26,8 +26,8 @@ let is_infix_operator token =
     | Token.Mult -> true
     | Token.Div -> true
     | _ -> false
-(**)
-(* let binding_power token left = *)
+
+(* let binding_power token = *)
 (*     let res = match token with *)
 (*         | Token.Add -> 1 *)
 (*         | Token.Sub -> 1 *)
@@ -35,7 +35,7 @@ let is_infix_operator token =
 (*         | Token.Div -> 2 *)
 (*         | _ -> 0 *)
 (*     in *)
-(*     res * 2 + if left then 1 else 0 *)
+(*     (res * 2 , res * 2 + 1) *)
 
 let init lexer =
     let parser = { lexer; current = None; peek = None } in
@@ -125,12 +125,17 @@ and parse_let_statement parser =
     let parser = advance parser in (* move past 'let' keyword *)
     let* parser, name = parse_identifier parser in
     let* parser, value = parser |> expect Token.Assign >>= parse_expression in
+    show parser |> print_string |> print_newline;
     Ok(parser, Ast.Let { name; value })
 and parse_expression parser =
     match parser.current with
     | Some Token.Sub ->
             let* parser, right = parser |> advance |> parse_expression in
             Ok(parser, Ast.Prefix { operator = Token.Sub; right })
+    | Some Token.LeftParen ->
+            let* parser, expression = parser |> parse_expression in
+            let* parser = parser |> expect Token.RightParen in
+            Ok(parser, expression)
     | _ ->
             let* parser, lhs = parser |> parse_atom in
             let parser = parser |> advance in
@@ -139,6 +144,7 @@ and parse_expression parser =
                     (let operator = token in
                     let parser = parser |> advance in
                     let* parser, rhs = parse_atom parser in
+                    show parser |> print_string |> print_newline;
                     Ok(parser, Ast.Infix { left=lhs; operator; right=rhs }))
                 | _ -> Ok(parser, lhs)
 
