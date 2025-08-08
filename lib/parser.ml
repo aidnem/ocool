@@ -19,6 +19,24 @@ let advance parser =
     let parser = { lexer; current; peek } in
     parser
 
+let is_infix_operator token =
+    match token with
+    | Token.Add -> true
+    | Token.Sub -> true
+    | Token.Mult -> true
+    | Token.Div -> true
+    | _ -> false
+(**)
+(* let binding_power token left = *)
+(*     let res = match token with *)
+(*         | Token.Add -> 1 *)
+(*         | Token.Sub -> 1 *)
+(*         | Token.Mult -> 2 *)
+(*         | Token.Div -> 2 *)
+(*         | _ -> 0 *)
+(*     in *)
+(*     res * 2 + if left then 1 else 0 *)
+
 let init lexer =
     let parser = { lexer; current = None; peek = None } in
     let parser = advance parser in
@@ -110,6 +128,34 @@ and parse_let_statement parser =
     Ok(parser, Ast.Let { name; value })
 and parse_expression parser =
     match parser.current with
-    | Some Token.Integer value -> Ok(advance parser, Ast.Integer value)
-    | Some tok -> Error (Printf.sprintf "Expressions may only be a singular int right now (found %s)" (Token.show tok))
-    | _ -> Error "Expressions may only be a singular int right now (found EOF)"
+    | Some Token.Sub ->
+            let* parser, right = parser |> advance |> parse_expression in
+            Ok(parser, Ast.Prefix { operator = Token.Sub; right })
+    | _ ->
+            let* parser, left = parser |> parse_atom in
+            let parser = parser |> advance in
+            (match parser.current with
+                Some token when is_infix_operator token ->
+                    let operator = token in
+                    let parser = parser |> advance in
+                    let* parser, right = parse_atom parser in
+                    Ok(parser, Ast.Infix { left; operator; right})
+                _ -> Ok(parser, left))
+and parse_atom parser =
+    match parser.current with
+    | Some Token.Integer value ->
+            Ok(advance parser, Ast.Integer value )
+    | Some Token.Ident name ->
+            if parser.current == Some Token.LeftParen then
+                parse_function_call parser
+            else
+                Ok(advance parser, Ast.Identifier name)
+    | Some tok -> Error (Printf.sprintf "Expected a valid atom (-[number], [number], [number + number], function_call()), but found %s" (Token.show tok))
+    | _ -> Error Printf.sprintf "Expected atom or expression, found EOF"
+and parse_function_call parser =
+    match parser.current, token.peek with
+    | Some Token.Ident name, Some Token.LeftParen ->
+        let parser = parser |> advance |> advance in
+        let* parser, args = parse_arguments parser in
+        Ok(parser, Ast.Call { fn = Ast.Identifier name; args })
+    | _ -> Error "unreachable, parse_function_call must only be called on an identifier followed by a ("
