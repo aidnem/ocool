@@ -27,15 +27,15 @@ let is_infix_operator token =
     | Token.Div -> true
     | _ -> false
 
-(* let binding_power token = *)
-(*     let res = match token with *)
-(*         | Token.Add -> 1 *)
-(*         | Token.Sub -> 1 *)
-(*         | Token.Mult -> 2 *)
-(*         | Token.Div -> 2 *)
-(*         | _ -> 0 *)
-(*     in *)
-(*     (res * 2 , res * 2 + 1) *)
+let binding_power token =
+    let res = match token with
+        | Token.Add -> 1
+        | Token.Sub -> 1
+        | Token.Mult -> 2
+        | Token.Div -> 2
+        | _ -> 0
+    in
+    (res * 2 , res * 2 + 1)
 
 let init lexer =
     let parser = { lexer; current = None; peek = None } in
@@ -133,25 +133,28 @@ and parse_let_statement (parser : t) : (t * Ast.statement, string) result =
     (* show parser |> print_string |> print_newline; *)
     Ok(parser, Ast.Let { name; value })
 and parse_expression parser =
-    match parser.current with
-    | Some Token.Sub ->
-            let* parser, right = parser |> advance |> parse_expression in
-            Ok(parser, Ast.Prefix { operator = Token.Sub; right })
-    | Some Token.LeftParen ->
-            let* parser, expression = parser |> parse_expression in
-            let* parser = parser |> expect Token.RightParen in
-            Ok(parser, expression)
-    | _ ->
-            let* parser, lhs = parser |> parse_atom in
+    let rec parse_expression' parser min_bp = 
+        let* parser, lhs =
             match parser.current with
-                | Some token when is_infix_operator token ->
-                    (let operator = token in
-                    let parser = parser |> advance in
-                    let* parser, rhs = parse_atom parser in
-                    (* show parser |> print_string |> print_newline; *)
-                    (* Printf.printf "Parsed expression %s\n" (Ast.show_expression (Ast.Infix {left=lhs; operator; right=rhs })); *)
-                    Ok(parser, Ast.Infix { left=lhs; operator; right=rhs }))
-                | _ -> Ok(parser, lhs)
+            | Some Token.LeftParen ->
+                    let* parser, expression = parser |> parse_expression in
+                    let* parser = parser |> expect Token.RightParen in
+                    Ok(parser, expression)
+            | _ ->
+                    parser |> parse_atom
+        in
+        match parser.current with
+            | Some token when is_infix_operator token ->
+                let operator = token in
+                let (left_bp, right_bp) = binding_power token in
+                let parser = parser |> advance in
+                let* parser, rhs = parse_atom parser in
+                (* show parser |> print_string |> print_newline; *)
+                (* Printf.printf "Parsed expression %s\n" (Ast.show_expression (Ast.Infix {left=lhs; operator; right=rhs })); *)
+                Ok(parser, Ast.Infix { left=lhs; operator; right=rhs })
+            | _ -> Ok(parser, lhs)
+    in
+    parse_expression' parser 0
 
 and parse_atom parser =
     match parser.current with
