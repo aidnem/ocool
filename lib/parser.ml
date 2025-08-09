@@ -113,19 +113,24 @@ and parse_block (parser : t) : (t * Ast.block, string) result =
     let block : Ast.block = { block } in
     Ok(parser, block)
 and parse_statement parser =
+    (* Printf.printf "Parse statement called on parser %s\n\n" (show parser); *)
     match parser.current with
     | Some Token.Return ->
             let* parser, return_expr = parser |> advance |> parse_expression in
+            (* Printf.printf "We got a return expression %s\n" (Ast.show_expression return_expr); *)
             Ok(parser, Ast.Return(return_expr))
     | Some Token.Let ->
-            parse_let_statement parser
+            let* parser, let_statement = parse_let_statement parser in
+            (* Printf.printf "Found a let statement %s\n" (Ast.show_statement let_statement); *)
+            Ok(parser, let_statement)
     | Some tok -> Error (Printf.sprintf "Expected statement (e.g. return ...), found %s" (Token.show tok))
     | None -> Error "Expected statement, found EOF"
-and parse_let_statement parser =
+and parse_let_statement (parser : t) : (t * Ast.statement, string) result =
     let parser = advance parser in (* move past 'let' keyword *)
     let* parser, name = parse_identifier parser in
     let* parser, value = parser |> expect Token.Assign >>= parse_expression in
-    show parser |> print_string |> print_newline;
+    (* "Parsed a let:" |> print_string |> print_newline; *)
+    (* show parser |> print_string |> print_newline; *)
     Ok(parser, Ast.Let { name; value })
 and parse_expression parser =
     match parser.current with
@@ -138,13 +143,13 @@ and parse_expression parser =
             Ok(parser, expression)
     | _ ->
             let* parser, lhs = parser |> parse_atom in
-            let parser = parser |> advance in
             match parser.current with
                 | Some token when is_infix_operator token ->
                     (let operator = token in
                     let parser = parser |> advance in
                     let* parser, rhs = parse_atom parser in
-                    show parser |> print_string |> print_newline;
+                    (* show parser |> print_string |> print_newline; *)
+                    (* Printf.printf "Parsed expression %s\n" (Ast.show_expression (Ast.Infix {left=lhs; operator; right=rhs })); *)
                     Ok(parser, Ast.Infix { left=lhs; operator; right=rhs }))
                 | _ -> Ok(parser, lhs)
 
