@@ -143,16 +143,17 @@ and parse_expression parser =
             | _ ->
                     parser |> parse_atom
         in
-        match parser.current with
-            | Some token when is_infix_operator token ->
-                let operator = token in
-                let (left_bp, right_bp) = binding_power token in
-                let parser = parser |> advance in
-                let* parser, rhs = parse_atom parser in
-                (* show parser |> print_string |> print_newline; *)
-                (* Printf.printf "Parsed expression %s\n" (Ast.show_expression (Ast.Infix {left=lhs; operator; right=rhs })); *)
-                Ok(parser, Ast.Infix { left=lhs; operator; right=rhs })
-            | _ -> Ok(parser, lhs)
+        let rec parse_expression'' parser lhs min_bp =
+            match parser.current with
+                | Some token when is_infix_operator token ->
+                    let operator = token in
+                    let (left_bp, right_bp) = binding_power token in
+                    let parser = parser |> advance in
+                    let* parser, rhs = parse_atom parser in
+                    (* show parser |> print_string |> print_newline; *)
+                    (* Printf.printf "Parsed expression %s\n" (Ast.show_expression (Ast.Infix {left=lhs; operator; right=rhs })); *)
+                    Ok(parser, Ast.Infix { left=lhs; operator; right=rhs })
+                | _ -> Ok(parser, lhs)
     in
     parse_expression' parser 0
 
