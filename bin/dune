@@ -1,4 +1,5 @@
 (executable
  (public_name ocool)
+ (modes byte exe)
  (name main)
  (libraries ocool))

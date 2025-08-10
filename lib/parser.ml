@@ -137,7 +137,7 @@ and parse_expression parser =
         let* parser, lhs =
             match parser.current with
             | Some Token.LeftParen ->
-                    let* parser, expression = parser |> parse_expression in
+                    let* parser, expression = parser |> advance |> parse_expression in
                     let* parser = parser |> expect Token.RightParen in
                     Ok(parser, expression)
             | _ ->
@@ -145,15 +145,20 @@ and parse_expression parser =
         in
         let rec parse_expression'' parser lhs min_bp =
             match parser.current with
-                | Some token when is_infix_operator token ->
-                    let operator = token in
-                    let (left_bp, right_bp) = binding_power token in
-                    let parser = parser |> advance in
-                    let* parser, rhs = parse_atom parser in
-                    (* show parser |> print_string |> print_newline; *)
-                    (* Printf.printf "Parsed expression %s\n" (Ast.show_expression (Ast.Infix {left=lhs; operator; right=rhs })); *)
-                    Ok(parser, Ast.Infix { left=lhs; operator; right=rhs })
+                | Some Token.RightParen -> Ok(parser, lhs) (* Intentionally don't advance because we are expecting a Token.RightParen once this returns *)
+                | Some operator when is_infix_operator operator ->
+                    let (left_bp, right_bp) = binding_power operator in
+                    if left_bp < min_bp then
+                        Ok(parser, lhs)
+                    else
+                        let parser = parser |> advance in
+                        let* parser, rhs = parse_expression' parser right_bp in
+                        parse_expression'' parser (Ast.Infix { left = lhs; operator; right = rhs }) min_bp
+                        (* show parser |> print_string |> print_newline; *)
+                        (* Printf.printf "Parsed expression %s\n" (Ast.show_expression (Ast.Infix {left=lhs; operator; right=rhs })); *)
                 | _ -> Ok(parser, lhs)
+        in
+        parse_expression'' parser lhs min_bp
     in
     parse_expression' parser 0
 
@@ -162,11 +167,11 @@ and parse_atom parser =
     | Some Token.Integer value ->
             Ok(advance parser, Ast.Integer value )
     | Some Token.Ident name ->
-            if parser.current == Some Token.LeftParen then
+            if parser.peek == Some Token.LeftParen then
                 parse_function_call parser
             else
                 Ok(advance parser, Ast.Identifier { identifier = name })
-    | Some tok -> Error (Printf.sprintf "Expected a valid atom (-[number], [number], [number + number], function_call()), but found %s" (Token.show tok))
+    | Some tok -> Error (Printf.sprintf "Expected a valid atom (number or function call), but found %s" (Token.show tok))
     | _ -> Error "Expected atom or expression, found EOF"
 
 and parse_call_arguments parser =

@@ -1,4 +1,3 @@
 fn main(argc, argv) {
-    let return_code = 1 + 2
-    return 3
+    return (1 + 2) * (3 + 4) * 5
 }
