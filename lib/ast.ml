@@ -6,14 +6,21 @@
 type program =
     { outer_statements: outer_statement list }
 
+and datatype =
+    | Int
+    | Float
+    | Char
+    | Pointer of datatype
+
 and outer_statement =
     | FuncDef of func_def
     | Import of string
 
 and func_def = 
     { name : identifier
-    ; args: identifier list
-    ; body : block }
+    ; args: typed_identifier list
+    ; body : block
+    ; return : datatype }
 
 and expression =
     | Identifier of identifier
@@ -37,7 +44,7 @@ and expression =
 
 and statement =
     | Let of
-        { name : identifier
+        { name : typed_identifier
         ; value : expression }
     | Return of expression
     | ExpressionStatement of expression
@@ -45,6 +52,11 @@ and statement =
     [@@deriving show]
 
 and identifier = { identifier: string }
+
+and typed_identifier =
+    { name : string
+    ; datatype: datatype }
+
 and block = { block : statement list }
 
 let new_program outer_statements = 

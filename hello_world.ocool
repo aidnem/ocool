@@ -1,3 +1,4 @@
-fn main(argc, argv) {
+fn main(argc: int, argv: ptr<char>) : int {
+    let crazy_pointer: ptr<ptr<ptr<int>>> = 0
     return (1 + 2) * (3 + 4) * 5
 }

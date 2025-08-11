@@ -69,8 +69,9 @@ and parse_function (parser : t) : (t * Ast.outer_statement, string) result =
     let* parser = expect Token.LeftParen parser in
     let* parser, args = parse_arguments parser in
     (* let args = List.map (fun a -> { identifier = a } : string -> Ast.identifier) args in *)
+    let* parser, return = parser |> expect Token.Colon >>= parse_type in
     let* parser, body = parse_block parser in
-    Ok(parser, Ast.FuncDef { name; args ; body })
+    Ok(parser, Ast.FuncDef { name; args ; body; return })
 and parse_identifier (parser: t) : (t * Ast.identifier, string) result =
     match parser.current with
     | Some Token.Ident identifier -> Ok(advance parser, { identifier } )
@@ -82,16 +83,14 @@ and expect tok parser =
                                                                           | Some(tok) -> Token.show tok
                                                                           | None -> "EOF"))
 and parse_arguments parser =
-    let parser = parser in
     let rec parse_arguments' parser args =
         match parser.current with
         | None -> Error "Expected identifier or ')', found EOF"
-        | Some Token.Ident id -> 
-                let parser = advance parser in
-                let id : Ast.identifier = { identifier = id } in
+        | Some Token.Ident _ -> 
+                let* parser, typed_identifier = parse_typed_identifier parser in
                 (match parser.current with
-                | Some Token.Comma -> parse_arguments' (advance parser) (id :: args)
-                | Some Token.RightParen -> Ok(advance parser, id :: args |> List.rev)
+                | Some Token.Comma -> parse_arguments' (advance parser) (typed_identifier :: args)
+                | Some Token.RightParen -> Ok(advance parser, typed_identifier :: args |> List.rev)
                 | Some tok -> Error (Printf.sprintf "Expected identifier or ')' in function arguments, found %s" (Token.show tok))
                 | None -> Error "Expected identifier or ')' in function arguments, found EOF")
         | Some tok -> Error (Printf.sprintf "Expected identifier or ')' in function arguments, found %s" (Token.show tok))
@@ -99,8 +98,30 @@ and parse_arguments parser =
     let* parser, args = parse_arguments' parser [] in
     Ok(parser, args)
 
+and parse_typed_identifier parser =
+    match parser.current with
+    | None -> Error "Expected typed identifier (name: type) but found EOF"
+    | Some Token.Ident id ->
+            let* parser, dt = parser |> advance |> expect Token.Colon >>= parse_type
+            in
+            Ok(parser, ({ name = id; datatype = dt }: Ast.typed_identifier))
+    | Some token -> Error (Printf.sprintf "Expected %s" (Token.show token))
+
+and parse_type (parser: t) : (t * Ast.datatype, string) result =
+    match parser.current with
+    | Some Token.NameInt -> Ok(advance parser, Ast.Int)
+    | Some Token.NameFloat -> Ok(advance parser, Ast.Float)
+    | Some Token.NameChar -> Ok(advance parser, Ast.Char)
+    | Some Token.NamePtr ->
+            let* parser = parser |> advance |> expect Token.LessThan in
+            let* parser, inner_type = parse_type parser in
+            let* parser = parser |> expect Token.GreaterThan in
+            Ok(parser, Ast.Pointer inner_type)
+    | Some token -> Error (Printf.sprintf "Expected int, float, char, or ptr, but found %s" (Token.show token))
+    | _ -> Error "Expected int, float, or ptr, but found EOF"
+
 and parse_block (parser : t) : (t * Ast.block, string) result =
-    let parser = advance parser in
+    let* parser = parser |> expect Token.LeftBrace in
     let rec parse_block' (parser : t) (stmts : Ast.statement list) : (t * Ast.statement list, string) result =
         match parser.current with
         | None -> Error "Expected statement or '}', found EOF"
@@ -127,7 +148,7 @@ and parse_statement parser =
     | None -> Error "Expected statement, found EOF"
 and parse_let_statement (parser : t) : (t * Ast.statement, string) result =
     let parser = advance parser in (* move past 'let' keyword *)
-    let* parser, name = parse_identifier parser in
+    let* parser, name = parse_typed_identifier parser in
     let* parser, value = parser |> expect Token.Assign >>= parse_expression in
     (* "Parsed a let:" |> print_string |> print_newline; *)
     (* show parser |> print_string |> print_newline; *)

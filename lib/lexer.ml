@@ -33,6 +33,8 @@ let rec next_token lexer =
             | '/' -> advance lexer, Div
             | '!' -> if_peeked lexer '=' ~default:Bang ~matched:NotEqual
             | '=' -> if_peeked lexer '=' ~default:Assign ~matched:Equal
+            | '<' -> if_peeked lexer '=' ~default:LessThan ~matched:LessThanOrEqualTo
+            | '>' -> if_peeked lexer '=' ~default:GreaterThan ~matched:GreaterThanOrEqualTo
             | '"' -> read_string lexer
             | ch when is_identifier ch -> read_identifier lexer
             | ch when is_number ch -> read_number lexer

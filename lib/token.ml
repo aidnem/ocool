@@ -3,6 +3,11 @@ type t =
     | Ident of string
     | String of string
     | Integer of int
+    (* type names *)
+    | NameInt
+    | NameFloat
+    | NameChar
+    | NamePtr
     (* operators *)
     | Assign
     | Add
@@ -11,6 +16,8 @@ type t =
     | Div
     | LessThan
     | GreaterThan
+    | LessThanOrEqualTo
+    | GreaterThanOrEqualTo
     | Equal
     | NotEqual
     | Bang
@@ -44,5 +51,13 @@ let lookup_ident str =
     | "if" -> If
     | "else" -> Else
     | "return" -> Return
+    | "int" -> NameInt
+    | "float" -> NameFloat
+    | "ptr" -> NamePtr
+    | "char" -> NameChar
     | non_keyword -> Ident non_keyword
-;;
+
+let is_type_name token =
+    match token with
+    | NameInt | NameFloat | NamePtr -> true
+    | _ -> false
