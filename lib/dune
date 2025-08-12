@@ -1,6 +1,6 @@
 (library
  (name ocool)
- (modules token lexer ast parser)
+ (modules token lexer ast parser ir)
  (libraries
    fmt
    ppx_deriving.runtime)

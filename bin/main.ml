@@ -2,6 +2,7 @@ module Token = Ocool.Token
 module Lexer = Ocool.Lexer
 module Parser = Ocool.Parser
 module Ast = Ocool.Ast
+module Ir = Ocool.Ir
 
 let usage_msg = "ocool [-verbose] <source file> -o <output file>"
 
@@ -28,7 +29,7 @@ let read_file file =
 let rec consume_lexer lexer =
     match Lexer.next_token lexer with
     | lexer, Some token ->
-        print_string @@ Token.show token;
+        Token.show token |> print_string;
         print_string "\n";
         consume_lexer lexer
     | _, None -> ()
@@ -44,10 +45,10 @@ let () =
             Arg.usage speclist usage_msg;
             ()
     | some_file ->
-            let lexer = Lexer.init @@ read_file some_file in (
+            let lexer = some_file |> read_file |> Lexer.init in (
                 print_string "Tokens: \n";
                 consume_lexer lexer;
-                match Parser.parse @@ Parser.init @@ Lexer.init @@ read_file some_file with
+                match lexer |> Parser.init |> Parser.parse with
                 | Ok(program) -> print_program program
                 | Error e -> Printf.eprintf "%s\n" e
             )
